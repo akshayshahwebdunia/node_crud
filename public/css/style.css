@@ -1,0 +1,18 @@
+body{
+    font-size: 16px;
+    line-height: 1.5;
+}
+/* main section */
+.site-main{
+    padding:50px;
+}
+
+#site-footer,#site-header{
+    text-align: center;
+    padding-bottom: 30px;
+    padding-top: 30px;
+    font-size: 12px;
+    background: #222;
+    color: #999;
+
+}

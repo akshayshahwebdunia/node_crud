@@ -8,7 +8,10 @@ try {
           res.send("No Event found");
         }
 
-        res.render("pages/events", { events: events });
+        res.render("pages/events", {
+          events: events,
+          success: req.flash("success"),
+        });
       });
     },
     seedEvents: (req, res) => {
@@ -47,28 +50,72 @@ try {
           res.send("No Event found");
         }
 
-        res.render("pages/single", { event });
+        res.render("pages/single", { event, success: req.flash("success") });
       });
     },
     createForm: (req, res) => {
-      res.render("pages/form");
+      res.render("pages/form", { errors: req.flash("errors") });
     },
     addEvent: (req, res) => {
+      req.checkBody("name", "Name Cant be blank").notEmpty();
+      req.checkBody("description", "Description Cant be blank").notEmpty();
 
-      console.log(req.body);
-      res.send(req.body);
-        /*   const event=new EventModel({
-            name:req.body.name,
-            description:req.body.description
-          });
- */
-   /*        event.save((err)=>{
-            if(err)
-              throw err
-          });
+      const event = new EventModel({
+        name: req.body.name,
+        description: req.body.description,
+      });
+      const errors = req.validationErrors();
+      if (errors) {
+        req.flash(
+          "errors",
+          errors.map((err) => err.msg)
+        );
+        return res.redirect("/events/create");
+      }
+      event.save((err) => {
+        if (err) throw err;
+        req.flash("success", "Successfully Created!");
+        res.redirect(`/events/${event.slug}`);
+      });
+    },
+    showEdit: (req, res) => {
+      EventModel.findOne({ slug: req.params.slug }, (err, event) => {
+        res.render("pages/edit", {
+          event: event,
+          errors: req.flash("errors"),
+        });
+      });
+    },
+    processEdit: (req, res) => {
+      req.checkBody("name", "Name Cant be blank").notEmpty();
+      req.checkBody("description", "Description Cant be blank").notEmpty();
 
-          res.render(`/events/${event.slug}`); */
-    }
+      const errors = req.validationErrors();
+      if (errors) {
+        req.flash(
+          "errors",
+          errors.map((err) => err.msg)
+        );
+
+        return res.redirect(`/events/${req.params.slug}/edit`);
+      }
+      EventModel.findOne({ slug: req.params.slug }, (err, event) => {
+        event.name = req.body.name;
+        event.description = req.body.description;
+        event.save((err) => {
+          if (err) throw err;
+          req.flash("success", "Successfully Created");
+          res.redirect("/events");
+        });
+      });
+    },
+    deleteEvent: (req, res) => {
+      var slug = req.params.slug;
+      EventModel.remove({ slug: slug }, (err) => {
+        req.flash("success", "Successfully Deleted the event" + slug);
+        res.redirect("/events")
+      });
+    },
   };
 } catch (err) {
   console.log(err);
